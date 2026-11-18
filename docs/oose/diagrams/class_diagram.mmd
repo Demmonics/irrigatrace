@@ -1,0 +1,134 @@
+classDiagram
+  direction TB
+  %% OOSE Domain Class Diagram for IrrigaTrace (KJS-AGR-01)
+  %% Verified against live codebase AST (models.py, engine.py)
+
+  class FarmPlot {
+    +str id
+    +str code
+    +str name
+    +float area_ha
+    +str soil_type
+    +str planting_date
+    +crop_stage_on()
+  }
+  class SensorReading {
+    +str id
+    +str plot_id
+    +str ts
+    +float soil_moisture_pct
+    +float temperature_c
+    +str source
+    +is_stale()
+  }
+  class WeatherSnapshot {
+    +str id
+    +str plot_id
+    +str captured_at
+    +float rain_probability_pct
+    +float forecast_rain_mm
+    +int horizon_h
+  }
+  class StageParam {
+    +float trigger_vwc
+    +float target_vwc
+    +int active_root_zone_mm
+  }
+  class RuleSet {
+    +str version
+    +Map~str, StageParam~ stage_params
+    +Map~str, float~ temperature
+    +Map~str, float~ rain
+    +Map~str, float~ duration
+    +Map~str, Any~ confidence
+    +from_yaml()
+    +from_json()
+    +to_dict()
+    +to_json()
+    +sha256()
+  }
+  class IrrigationEngine {
+    +engine_code_sha256()
+    +recommend()
+    +build_deterministic_explanation()
+  }
+  class Recommendation {
+    +RecommendedAction action
+    +float duration_h
+    +float confidence
+    +List of str~ fired_rules
+  }
+  class EngineInputs {
+    +float soil_moisture_pct
+    +float temperature_c
+    +float rain_probability_pct
+    +float forecast_rain_mm
+    +CropStage crop_stage
+    +int days_since_last_irrigation
+    +to_dict()
+  }
+  class IrrigationDecision {
+    +str id
+    +str plot_id
+    +str created_at
+    +str ruleset_version
+    +RecommendedAction recommended_action
+    +float recommended_duration_h
+  }
+  class DecisionSnapshot {
+    +str decision_id
+    +str sensor_reading_id
+    +str weather_snapshot_id
+    +str inputs_json
+    +str ruleset_json
+    +str engine_version
+    +sha256()
+  }
+  class DecisionExplanation {
+    +str id
+    +str decision_id
+    +ExplanationKind kind
+    +str content_json
+    +str provenance_json
+    +str created_at
+  }
+  class HumanReview {
+    +str id
+    +str decision_id
+    +str reviewer_id
+    +ReviewAction action
+    +RecommendedAction final_action
+    +float final_duration_h
+  }
+  class DecisionEvent {
+    +int seq
+    +str decision_id
+    +EventType event_type
+    +str actor_id
+    +str actor_role
+    +str occurred_at
+    +calculate_hash()
+  }
+  class OutcomeRecord {
+    +str id
+    +str decision_id
+    +str recorded_by
+    +str recorded_at
+    +float~ actual_duration_h
+    +float~ soil_moisture_after_pct
+  }
+
+  %% Structural Relationships
+  IrrigationDecision *-- DecisionSnapshot : composition (immutable snapshot)
+  IrrigationDecision o-- HumanReview : aggregation (0..1 review)
+  IrrigationDecision *-- DecisionExplanation : composition
+  IrrigationDecision o-- OutcomeRecord : aggregation (0..1 outcome)
+  IrrigationDecision *-- DecisionEvent : has audit stream (1..*)
+  DecisionSnapshot o-- FarmPlot : references
+  DecisionSnapshot o-- SensorReading : contains sensor state
+  DecisionSnapshot o-- WeatherSnapshot : contains weather forecast
+  DecisionSnapshot o-- Recommendation : contains original AI output
+  IrrigationEngine ..> EngineInputs : consumes
+  IrrigationEngine ..> Recommendation : computes
+  IrrigationEngine o-- RuleSet : uses
+  RuleSet *-- StageParam : contains stage parameters

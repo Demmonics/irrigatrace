@@ -1,0 +1,19 @@
+sequenceDiagram
+    autonumber
+    actor Aud as Regulatory Auditor
+    participant API as FastAPI Router
+    participant Rep as DecisionReplayService
+    participant Eng as IrrigationEngine
+    participant Repo as SqliteDecisionRepository
+    participant DB as SQLite WAL
+
+    Aud->>API: GET /api/decisions/{id}/reproduce
+    API->>Rep: reproduce(decision_id)
+    Rep->>Repo: get_snapshot(decision_id)
+    Repo->>DB: SELECT * FROM decision_snapshots
+    DB-->>Rep: DecisionSnapshot (historical inputs, ruleset)
+    Rep->>Eng: recommend(snapshot.inputs, current_ruleset)
+    Eng-->>Rep: current_recommendation
+    Rep->>Rep: diff(snapshot.inputs, current_recommendation)
+    Rep-->>API: DecisionComparison (deltas, match=true/false)
+    API-->>Aud: 200 OK (Reproduce Report)

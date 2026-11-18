@@ -1,0 +1,38 @@
+flowchart TD
+    subgraph WebApp["web/ Layer (Presentation: Next.js)"]
+        Screens["app/(screens): S1-S8"]
+        Components["components/ui & decision"]
+    end
+
+    subgraph APIPkg["api/irrigatrace/api/ Layer (Routing & DTOs)"]
+        Routers["routers/ (decisions, review, lab, health)"]
+        Schemas["schemas/ (Pydantic DTOs)"]
+        Deps["deps.py & sse.py (Auth & Streaming)"]
+    end
+
+    subgraph ServicesPkg["api/irrigatrace/services/ Layer (Orchestration)"]
+        Recorder["DecisionRecorder (Facade)"]
+        ReviewSvc["ReviewService"]
+        ReplaySvc["DecisionReplayService"]
+        IntegritySvc["IntegrityService"]
+        NarrationSvc["NarrationService"]
+    end
+
+    subgraph DomainPkg["api/irrigatrace/domain/ Layer (Core Business Domain)"]
+        DomainModels["models.py (Entities & Value Objects)"]
+        DomainEngine["engine.py (Pure FAO-56 Engine)"]
+        DomainPorts["ports.py (Protocols)"]
+    end
+
+    subgraph InfraPkg["api/irrigatrace/infra/ Layer (Infrastructure)"]
+        DBInfra["db/ connection & Sqlite repositories"]
+        AIInfra["clients for ollama, gemini, qdrant"]
+    end
+
+    WebApp -->|HTTP / JSON / SSE| APIPkg
+    APIPkg --> ServicesPkg
+    ServicesPkg --> DomainPkg
+    ServicesPkg --> DomainPorts
+    InfraPkg -->|implements| DomainPorts
+    InfraPkg --> DomainPkg
+    ServicesPkg --> InfraPkg

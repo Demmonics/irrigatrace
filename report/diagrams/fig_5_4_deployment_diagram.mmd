@@ -1,0 +1,36 @@
+flowchart TB
+    subgraph DeviceNode["Client Device Node (Field Supervisor / Farm Admin / Auditor)"]
+        Browser["Modern Web Browser (Desktop / Mobile)<br/>Next.js Client Bundle & SSR Hydration"]
+    end
+
+    subgraph AppServerNode["On-Premises Application Server Node"]
+        subgraph PythonRuntime["Python 3.12 / 3.13 Runtime"]
+            Uvicorn["Uvicorn ASGI Server"]
+            FastAPI["FastAPI Web Framework"]
+            DomainCode["IrrigaTrace Clean Architecture Modules"]
+        end
+        subgraph StorageSystem["Embedded Storage Subsystem"]
+            SQLiteFile[("irrigatrace.db (WAL Mode)")]
+            Triggers["Append-Only DB Triggers"]
+        end
+    end
+
+    subgraph AINode["Local AI Workstation Node"]
+        subgraph OllamaRuntime["Ollama Local Inference Runtime"]
+            ModelWeights[["qwen2.5:3b LLM Weights"]]
+            EmbedWeights[["nomic-embed-text Weights"]]
+        end
+    end
+
+    subgraph CloudNode["External Cloud Infrastructure Node"]
+        GeminiAPI[["Google Gemini 2.5 Flash API<br/>(Fallback & Translation)"]]
+        QdrantCloud[("Qdrant Cloud Vector Index<br/>(With Deterministic SQL Fallback)")]
+    end
+
+    Browser <-->|"HTTPS / TLS 1.3 (Ports 3000 / 8000)"| Uvicorn
+    Uvicorn --> FastAPI
+    FastAPI --> DomainCode
+    DomainCode --> SQLiteFile
+    SQLiteFile --- Triggers
+    DomainCode <-->|"HTTP REST (Port 11434)"| OllamaRuntime
+    DomainCode -.->|"Outbound HTTPS REST (TLS)"| CloudNode

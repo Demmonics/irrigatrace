@@ -1,0 +1,25 @@
+sequenceDiagram
+    autonumber
+    actor Sup as Field Supervisor
+    participant API as FastAPI Router
+    participant Svc as ReviewService
+    participant Repo as SqliteDecisionRepository
+    participant DB as SQLite WAL
+    participant Bus as EventPublisher
+
+    Sup->>API: POST /api/decisions/{id}/review (action=MODIFY, duration=2.0h, reason=R-POWER)
+    API->>Svc: submit_review(id, review_data, reviewer_id)
+    Svc->>Repo: get_by_id(id)
+    Repo->>DB: SELECT * FROM irrigation_decisions
+    DB-->>Repo: decision (status=PENDING_REVIEW)
+    Svc->>Repo: save_review(HumanReview)
+    Repo->>DB: INSERT INTO human_reviews
+    Note over DB: Original AI duration preserved
+    Svc->>Repo: update_status(id, status=MODIFIED)
+    Repo->>DB: UPDATE irrigation_decisions SET status='MODIFIED'
+    Note over DB: Only status projection can change
+    Svc->>Repo: save_event(seq=4, REVIEW_MODIFIED, prev_hash=H3)
+    Repo->>DB: INSERT INTO decision_events
+    Svc->>Bus: publish(DecisionEvent)
+    Svc-->>API: Updated IrrigationDecision
+    API-->>Sup: 200 OK (Decision MODIFIED & Finalized)

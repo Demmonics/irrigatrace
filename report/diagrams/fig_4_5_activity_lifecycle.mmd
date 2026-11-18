@@ -1,0 +1,36 @@
+flowchart TD
+    subgraph Ingestion["Field Telemetry & Ingestion"]
+        Start([Telemetry Arrives]) --> ReadSensors[Sample Soil Moisture & Ambient Temp]
+        ReadSensors --> FetchWeather[Capture Weather Forecast & Rain Prob]
+        FetchWeather --> FreezeSnap[Freeze Immutable Inputs Snapshot]
+    end
+
+    subgraph Engine["Deterministic Engine & Storage"]
+        FreezeSnap --> ExecEngine[Execute Pure FAO-56 Engine]
+        ExecEngine --> CalcDeficit[Calculate Root-Zone Moisture Deficit]
+        CalcDeficit --> GenRec[Generate Recommendation Value Object]
+        GenRec --> GenesisHash[Compute Genesis SHA-256 Hash]
+        GenesisHash --> StoreDB[(Store with DB Triggers)]
+    end
+
+    subgraph Review["Supervisor Review & Override"]
+        StoreDB --> NeedsReview{Requires Review?}
+        NeedsReview -- Auto Finalize --> Finalize[Set Status: FINALIZED]
+        NeedsReview -- Human Queue --> Queue[Display in Supervisor Queue]
+        Queue --> ActionChoice{Supervisor Action}
+        ActionChoice -- Approve --> AppReview[Record HumanReview: APPROVE]
+        ActionChoice -- Modify --> ModReview[Record HumanReview: MODIFY + Reason]
+        ActionChoice -- Reject --> RejReview[Record HumanReview: REJECT + Reason]
+        AppReview --> AppendChain[Append Event to SHA-256 Chain]
+        ModReview --> AppendChain
+        RejReview --> AppendChain
+        AppendChain --> Finalize
+    end
+
+    subgraph Audit["Audit Ledger & Outcome"]
+        Finalize --> FieldApply[Apply Water to Plot SG-104]
+        FieldApply --> Wait72[Wait 72 Hours Observational Window]
+        Wait72 --> LogOutcome[Record OutcomeRecord: Actual Moisture & Health]
+        LogOutcome --> AppendOutcome[Append OUTCOME_RECORDED Event]
+        AppendOutcome --> End([Decision Lifecycle Complete])
+    end

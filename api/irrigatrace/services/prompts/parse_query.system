@@ -1,0 +1,1 @@
+Convert the user's request into a JSON filter using ONLY these fields: plot_code, status[], overridden(bool), ruleset_version, date_from, date_to, action[], text_query. Unknown fields are forbidden. If the request cannot be expressed, return {"error":"unsupported"}.

@@ -1,0 +1,15 @@
+stateDiagram-v2
+    [*] --> GENERATED : Telemetry Ingested & Engine Evaluated
+    GENERATED --> PENDING_REVIEW : Snapshot Frozen & Genesis Hash Sealed
+    
+    PENDING_REVIEW --> APPROVED : Review Action: APPROVE (Duration Accepted)
+    PENDING_REVIEW --> MODIFIED : Review Action: MODIFY (Duration Adjusted + Reason)
+    PENDING_REVIEW --> REJECTED : Review Action: REJECT (Duration Zeroed + Reason)
+    
+    APPROVED --> FINALIZED : Decision Finalized for Actuation
+    MODIFIED --> FINALIZED : Decision Finalized for Actuation
+    REJECTED --> FINALIZED : Decision Closed (No Pumping)
+    
+    FINALIZED --> ACTION_RECORDED : Pump Actuation Executed / Deferred
+    ACTION_RECORDED --> OUTCOME_RECORDED : 72h Realized Field Observations Logged
+    OUTCOME_RECORDED --> [*] : Lifecycle Immutable & Archived

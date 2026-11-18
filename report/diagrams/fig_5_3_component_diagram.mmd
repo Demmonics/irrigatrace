@@ -1,0 +1,45 @@
+flowchart TB
+    subgraph Client["Next.js Web Frontend"]
+        WebUI["Web UI Component (S1-S8 Screens)"]
+    end
+
+    subgraph APIComp["FastAPI Gateway"]
+        Gateway["REST & SSE API Router"]
+    end
+
+    subgraph Services["Orchestration Services"]
+        RecorderComp["DecisionRecorder Component"]
+        ReviewComp["ReviewService Component"]
+        ReplayComp["DecisionReplayService Component"]
+        IntegrityComp["IntegrityService Component"]
+        NarrationComp["NarrationService Component"]
+    end
+
+    subgraph DomainComp["Core Domain"]
+        EngineComp["IrrigationEngine (Pure FAO-56)"]
+        RulesetComp["RuleSet Specification"]
+    end
+
+    subgraph Persistence["Storage Subsystem"]
+        RepoComp["Sqlite Repositories Component"]
+        DB[("SQLite Storage Engine (WAL Mode)\nTriggers: dec_core_immutable, snap_no_update")]
+    end
+
+    subgraph External["External AI & Telemetry"]
+        OllamaComp[["Local Ollama Daemon (qwen2.5:3b)"]]
+        GeminiComp[["Google Gemini Cloud API"]]
+    end
+
+    WebUI <-->|REST & SSE| Gateway
+    Gateway --> RecorderComp
+    Gateway --> ReviewComp
+    Gateway --> ReplayComp
+    Gateway --> IntegrityComp
+    RecorderComp --> EngineComp
+    EngineComp --> RulesetComp
+    RecorderComp --> RepoComp
+    ReviewComp --> RepoComp
+    IntegrityComp --> RepoComp
+    NarrationComp --> OllamaComp
+    NarrationComp -.-> GeminiComp
+    RepoComp --> DB

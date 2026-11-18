@@ -1,0 +1,84 @@
+classDiagram
+    direction TB
+    note "Concrete Object Graph for Decision IRR-2026-018 on Plot SG-104"
+
+    class plot_SG104 {
+        id = "plot-104"
+        code = "SG-104"
+        name = "West Cane Plateau"
+        crop = "sugarcane"
+        soil_type = "Clay Loam"
+        area_ha = 4.2
+        application_rate_mm_h = 14.0
+    }
+
+    class reading_read104 {
+        id = "read-104"
+        plot_id = "plot-104"
+        ts = "2026-10-24T09:41:58Z"
+        soil_moisture_pct = 21.0
+        temperature_c = 33.0
+    }
+
+    class weather_wsnap104 {
+        id = "wsnap-104"
+        plot_id = "plot-104"
+        rain_probability_pct = 12.0
+        forecast_rain_mm = 0.0
+    }
+
+    class dec_IRR2026018 {
+        id = "IRR-2026-018"
+        plot_id = "plot-104"
+        ruleset_version = "rules-v1.4.2"
+        recommended_action = IRRIGATE
+        recommended_duration_h = 2.8
+        confidence = 0.84
+        status = MODIFIED
+    }
+
+    class snap_IRR2026018 {
+        decision_id = "IRR-2026-018"
+        engine_version = "1.4.2"
+        snapshot_sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+
+    class rev_rev104 {
+        id = "rev-018"
+        reviewer_id = "usr-sup-01"
+        action = MODIFY
+        final_action = IRRIGATE
+        final_duration_h = 2.0
+        reason_code = "R-POWER"
+        reason_text = "3-phase power window restricted to 2.0 hours"
+    }
+
+    class event_seq1 {
+        seq = 1
+        event_type = SENSOR_RECEIVED
+        prev_hash = "GENESIS"
+        event_hash = "9f83c68a..."
+    }
+
+    class event_seq4 {
+        seq = 4
+        event_type = REVIEW_MODIFIED
+        prev_hash = "3a72b14c..."
+        event_hash = "7d41f09e..."
+    }
+
+    class outcome_out104 {
+        id = "out-018"
+        actual_duration_h = 2.0
+        soil_moisture_after_pct = 36.5
+        water_stress_observed = 0
+    }
+
+    dec_IRR2026018 --> plot_SG104
+    dec_IRR2026018 --> snap_IRR2026018
+    dec_IRR2026018 --> rev_rev104
+    dec_IRR2026018 --> event_seq1
+    dec_IRR2026018 --> event_seq4
+    dec_IRR2026018 --> outcome_out104
+    snap_IRR2026018 --> reading_read104
+    snap_IRR2026018 --> weather_wsnap104

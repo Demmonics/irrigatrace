@@ -1,0 +1,42 @@
+# Environment & secrets (Invariant 9)
+.env
+.env.*
+!.env.example
+
+# State & logs
+.logs/
+.state/
+*.log
+
+# Databases & SQLite
+*.db
+*.sqlite
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node & Next.js
+node_modules/
+.next/
+out/
+build/
+dist/
+.eslintcache
+
+# Playwright & testing
+test-results/
+playwright-report/
+blob-report/
+
+# OS artifacts
+Thumbs.db
+.DS_Store

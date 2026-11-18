@@ -1,0 +1,39 @@
+version: rules-v1.4.2
+stage_params:
+  ESTABLISHMENT:
+    trigger_vwc: 24
+    target_vwc: 32
+    active_root_zone_mm: 200
+  TILLERING:
+    trigger_vwc: 23
+    target_vwc: 32
+    active_root_zone_mm: 250
+  GRAND_GROWTH:
+    trigger_vwc: 25
+    target_vwc: 34
+    active_root_zone_mm: 300
+  MATURITY:
+    trigger_vwc: 18
+    target_vwc: 26
+    active_root_zone_mm: 250
+temperature:
+  hot_above_c: 30
+  trigger_uplift_pp_per_c: 0.3
+  max_uplift_pp: 2.0
+rain:
+  defer_if_prob_ge: 60
+  partial_if_prob_ge: 30
+  partial_discount_per_10pct: 0.05
+duration:
+  min_h: 0.5
+  max_h: 6.0
+  round_to_h: 0.1
+confidence:
+  base: 0.55
+  margin_weight: 0.35
+  rain_uncertain_band: [30, 70]
+  rain_uncertain_penalty: 0.15
+  stale_sensor_hours: 3
+  stale_penalty: 0.10
+  min: 0.05
+  max: 0.98

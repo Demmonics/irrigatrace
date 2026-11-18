@@ -1,0 +1,46 @@
+flowchart LR
+    subgraph Client["Presentation Layer (Client Browser)"]
+        UI["Next.js 14 App Router\n(Screens S1-S8: Dashboard, Case File, Replay, Compare, Lab, Audit)"]
+    end
+
+    subgraph Service["Application & Service Layer (FastAPI)"]
+        Router["FastAPI REST & SSE Routers"]
+        Recorder["DecisionRecorder (Facade)"]
+        ReviewSvc["ReviewService"]
+        ReplaySvc["DecisionReplayService"]
+        IntegritySvc["IntegrityService"]
+        NarrationSvc["NarrationService (Strategy)"]
+        Validator["NumberConsistencyValidator"]
+    end
+
+    subgraph Domain["Domain Model Layer (Pure Functional OO)"]
+        Engine["IrrigationEngine (v1.4.2)"]
+        Models["Domain Entities & Value Objects"]
+        Ports["Repository & Clock Protocols"]
+    end
+
+    subgraph Storage["Storage & Persistence Layer"]
+        DB[("SQLite Database (WAL Mode)\nTriggers: dec_core_immutable, snap_no_update")]
+        Repos["Sqlite Repositories"]
+    end
+
+    subgraph AI["AI Inference & Vector Engines"]
+        Ollama[["Local Ollama Daemon\nqwen2.5:3b (Briefings)"]]
+        Gemini[["Google Gemini API\n(Fallback & Multilingual)"]]
+        Qdrant[("Qdrant Vector DB /\nDeterministic SQL Fallback")]
+    end
+
+    UI <-- REST / SSE --> Router
+    Router --> Recorder
+    Router --> ReviewSvc
+    Router --> ReplaySvc
+    Router --> IntegritySvc
+    Recorder --> Engine
+    Recorder --> Repos
+    ReviewSvc --> Repos
+    IntegritySvc --> Repos
+    Repos --> DB
+    NarrationSvc --> Validator
+    NarrationSvc --> Ollama
+    NarrationSvc -.-> Gemini
+    Recorder -.-> Qdrant

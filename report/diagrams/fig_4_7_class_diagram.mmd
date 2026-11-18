@@ -1,0 +1,151 @@
+classDiagram
+    direction TB
+
+    class FarmPlot {
+        +str id
+        +str code
+        +str name
+        +float area_ha
+        +str soil_type
+        +str planting_date
+        +float application_rate_mm_h
+        +str crop
+        +str variety
+        +str irrigation_method
+        +str geojson
+        +crop_stage_on(date) CropStage
+    }
+
+    class SensorReading {
+        +str id
+        +str plot_id
+        +str ts
+        +float soil_moisture_pct
+        +float temperature_c
+        +str source
+        +str quality_flag
+        +is_stale(now_iso, threshold_hours) bool
+    }
+
+    class WeatherSnapshot {
+        +str id
+        +str plot_id
+        +str captured_at
+        +float rain_probability_pct
+        +float forecast_rain_mm
+        +int horizon_h
+        +str source
+    }
+
+    class EngineInputs {
+        +float soil_moisture_pct
+        +float temperature_c
+        +float rain_probability_pct
+        +float forecast_rain_mm
+        +CropStage crop_stage
+        +int days_since_last_irrigation
+        +float application_rate_mm_h
+        +int active_root_zone_mm
+        +str sensor_reading_ts
+        +to_dict() dict
+    }
+
+    class Recommendation {
+        +RecommendedAction action
+        +float duration_h
+        +float confidence
+        +List~str~ fired_rules
+    }
+
+    class RuleSet {
+        +str version
+        +dict stage_params
+        +dict temperature
+        +dict rain
+        +dict duration
+        +dict confidence
+        +from_yaml(yaml_content) RuleSet
+        +to_json() str
+        +sha256() str
+    }
+
+    class IrrigationEngine {
+        +str VERSION
+        +engine_code_sha256() str
+        +recommend(inputs, ruleset) Recommendation
+        +build_deterministic_explanation(inputs, ruleset, rec) dict
+    }
+
+    class DecisionSnapshot {
+        +str decision_id
+        +str sensor_reading_id
+        +str weather_snapshot_id
+        +str inputs_json
+        +str ruleset_json
+        +str engine_version
+        +str engine_code_sha256
+        +str snapshot_sha256
+        +sha256() str
+    }
+
+    class HumanReview {
+        +str id
+        +str decision_id
+        +str reviewer_id
+        +ReviewAction action
+        +RecommendedAction final_action
+        +float final_duration_h
+        +str created_at
+        +str reason_code
+        +str reason_text
+    }
+
+    class DecisionEvent {
+        +int seq
+        +str decision_id
+        +EventType event_type
+        +str actor_id
+        +str actor_role
+        +str occurred_at
+        +str payload_json
+        +str prev_hash
+        +str event_hash
+        +calculate_hash(params) str
+    }
+
+    class IrrigationDecision {
+        +str id
+        +str plot_id
+        +str created_at
+        +str ruleset_version
+        +RecommendedAction recommended_action
+        +float recommended_duration_h
+        +float confidence
+        +DecisionStatus status
+        +DecisionSnapshot snapshot
+        +DecisionExplanation explanation
+        +List~HumanReview~ reviews
+        +List~DecisionEvent~ events
+    }
+
+    class OutcomeRecord {
+        +str id
+        +str decision_id
+        +str recorded_by
+        +str recorded_at
+        +float actual_duration_h
+        +float soil_moisture_after_pct
+        +float actual_rainfall_mm
+        +int water_stress_observed
+        +str crop_health_note
+        +str notes
+    }
+
+    FarmPlot "1" <-- "*" IrrigationDecision : targets
+    IrrigationDecision "1" *-- "1" DecisionSnapshot : contains
+    IrrigationDecision "1" *-- "*" HumanReview : evaluated by
+    IrrigationDecision "1" *-- "*" DecisionEvent : audited by
+    IrrigationDecision "1" o-- "0..1" OutcomeRecord : observes
+    DecisionSnapshot ..> EngineInputs : serializes
+    IrrigationEngine ..> Recommendation : computes
+    IrrigationEngine ..> RuleSet : configures

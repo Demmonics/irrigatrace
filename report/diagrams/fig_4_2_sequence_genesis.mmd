@@ -1,0 +1,27 @@
+sequenceDiagram
+    autonumber
+    actor Timer as System Scheduler
+    participant API as FastAPI Router
+    participant Rec as DecisionRecorder
+    participant Eng as IrrigationEngine
+    participant Repo as SqliteDecisionRepository
+    participant DB as SQLite WAL
+    participant Bus as EventPublisher
+
+    Timer->>API: POST /api/decisions (plot_id, inputs)
+    API->>Rec: record_decision(plot_id, inputs)
+    Rec->>Eng: recommend(inputs, ruleset)
+    Eng-->>Rec: Recommendation(action, duration_h, confidence, fired_rules)
+    Rec->>Repo: save_snapshot(DecisionSnapshot)
+    Repo->>DB: INSERT INTO decision_snapshots
+    Note over DB: snap_no_update trigger active
+    Rec->>Repo: save_decision(IrrigationDecision)
+    Repo->>DB: INSERT INTO irrigation_decisions
+    Note over DB: dec_core_immutable trigger active
+    Rec->>Repo: save_event(seq=1, SENSOR_RECEIVED, prev="GENESIS")
+    Repo->>DB: INSERT INTO decision_events
+    Rec->>Repo: save_event(seq=2, RECOMMENDATION_GENERATED)
+    Repo->>DB: INSERT INTO decision_events
+    Rec->>Bus: publish(DecisionEvent)
+    Rec-->>API: IrrigationDecision (status=GENERATED)
+    API-->>Timer: 201 Created (IRR-2026-XXX)

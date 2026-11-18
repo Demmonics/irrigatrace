@@ -1,0 +1,37 @@
+flowchart LR
+    subgraph Actors["Primary and Supporting Actors"]
+        Supervisor["Field Supervisor\n(Role: SUPERVISOR)"]
+        Admin["Farm Administrator\n(Role: ADMIN)"]
+        Auditor["Regulatory Auditor\n(Role: AUDITOR)"]
+        SystemScheduler["System Scheduler /\nTelemetry Ingestion"]
+    end
+
+    subgraph System["IrrigaTrace Observatory System Boundary"]
+        UC01["UC-01: Ingest Sensor Telemetry & Weather Forecast"]
+        UC02["UC-02: Compute Deterministic Irrigation Recommendation"]
+        UC03["UC-03: Freeze Decision Snapshot & Initialize Genesis Hash"]
+        UC04["UC-04: Review Recommendation (Approve / Modify / Reject)"]
+        UC05["UC-05: Reconstruct Historical State at Time t (Replay)"]
+        UC06["UC-06: Verify Ruleset & Engine Code Drift (Reproduce)"]
+        UC07["UC-07: Analyze Input Deltas & Sensitivity (Flip Analysis)"]
+        UC08["UC-08: Simulate Environmental Scenarios (Lab Bench)"]
+        UC09["UC-09: Verify Append-Only Cryptographic Hash Chains"]
+        UC10["UC-10: Record Realized Field Outcome (72h Post-Irrigation)"]
+        UC11["UC-11: Generate Operator Briefing (LLM Grounding)"]
+    end
+
+    SystemScheduler --> UC01
+    UC01 --> UC02
+    UC02 --> UC03
+    UC02 -.->|<<include>>| UC11
+
+    Supervisor --> UC04
+    Supervisor --> UC05
+    Supervisor --> UC10
+
+    Admin --> UC07
+    Admin --> UC08
+    Admin --> UC06
+
+    Auditor --> UC05
+    Auditor --> UC09
